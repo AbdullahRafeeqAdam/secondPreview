@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+</head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        background: linear-gradient(to top, rgb(228, 3, 3), rgb(88, 1, 1));
+    }
+
+    .container {
+        max-width: 700px;
+        width: 100%;
+        background-color: #fff;
+        padding: 25px 30px;
+        border-radius: 5px;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .container .title {
+        font-size: 25px;
+        font-weight: 500;
+        position: relative;
+    }
+
+    .container .title::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 3px;
+        width: 30px;
+        border-radius: 5px;
+        background: linear-gradient(to top, rgb(228, 3, 3), rgb(88, 1, 1))
+    }
+
+    .content form .user-details {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin: 20px 0 12px 0;
+    }
+
+    form .user-details .input-box {
+        margin-bottom: 15px;
+        width: calc(100% / 2 - 20px);
+    }
+
+    form .input-box span.details {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    .user-details .input-box input {
+        height: 45px;
+        width: 100%;
+        outline: none;
+        font-size: 16px;
+        border-radius: 5px;
+        padding-left: 15px;
+        border: 1px solid #ccc;
+        border-bottom-width: 2px;
+        transition: all 0.3s ease;
+    }
+
+    .user-details .input-box input:focus,
+    .user-details .input-box input:valid {
+        border-color: #9b59b6;
+    }
+
+    form .gender-details .gender-title {
+        font-size: 20px;
+        font-weight: 500;
+    }
+
+    form .category {
+        display: flex;
+        width: 80%;
+        margin: 14px 0;
+        justify-content: space-between;
+    }
+
+    form .category label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    form .category label .dot {
+        height: 18px;
+        width: 18px;
+        border-radius: 50%;
+        margin-right: 10px;
+        background: #d9d9d9;
+        border: 5px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    #dot-1:checked~.category label .one,
+    #dot-2:checked~.category label .two,
+    #dot-3:checked~.category label .three {
+        background: #9b59b6;
+        border-color: #d9d9d9;
+    }
+
+    form input[type="radio"] {
+        display: none;
+    }
+
+    form .button {
+        height: 45px;
+        margin: 35px 0;
+    }
+
+    form .button input {
+        height: 100%;
+        width: 100%;
+        border-radius: 5px;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(to top, rgb(228, 3, 3), rgb(88, 1, 1))
+    }
+
+    form .button input:hover {
+        background: linear-gradient(to top, rgb(228, 3, 3), rgb(88, 1, 1))
+    }
+
+    @media (max-width: 584px) {
+        .container {
+            max-width: 100%;
+        }
+
+        form .user-details .input-box {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        form .category {
+            width: 100%;
+        }
+
+        .content form .user-details {
+            max-height: 300px;
+            overflow-y: scroll;
+        }
+
+        .user-details::-webkit-scrollbar {
+            width: 5px;
+        }
+    }
+
+    @media (max-width: 459px) {
+        .container .content .category {
+            flex-direction: column;
+        }
+    }
+</style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="title">Vehicle Report</div>
+        <div class="content">
+            <form id="vin-form">
+                <div class="user-details">
+                    <div class="input-box">
+                        <span class="details">Name</span>
+                        <input type="text" id="name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">Email</span>
+                        <input type="email" id="email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">VIN Number</span>
+                        <input type="text" id="vin" placeholder="Enter VIN Number" required>
+                    </div>
+                </div>
+                <div class="button">
+                    <input type="submit" value="Get Report">
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('vin-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const vin = document.getElementById('vin').value.toUpperCase();
+            const apiPrefix = "https://api.vindecoder.eu/3.2";
+            const apiKey = "41bd9dfd4a3d"; // Your API key
+            const secretKey = "1463818e23"; // Your secret key
+            const id = "decode";
+
+            const controlSum = CryptoJS.SHA1(`${vin}|${id}|${apiKey}|${secretKey}`)
+                .toString(CryptoJS.enc.Hex)
+                .substring(0, 10);
+
+            const url = `${apiPrefix}/${apiKey}/${controlSum}/decode/${vin}.json`;
+
+            axios.get(url)
+                .then(response => {
+                    console.log('API Response:', response.data); // Log the response for debugging
+
+                    if (response.data) {
+                        console.log('Response Data:', response.data); // Log the entire response data
+
+                        // Generate PDF using jsPDF
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+
+                        // Add some content to the PDF
+                        doc.text(`VIN: ${vin}`, 10, 10);
+                        doc.text(`Make: ${response.data.make}`, 10, 20);
+                        doc.text(`Model: ${response.data.model}`, 10, 30);
+                        doc.text(`Year: ${response.data.year}`, 10, 40);
+                        // Add other details from response.data as needed
+
+                        // Save the PDF as a Blob
+                        const blob = doc.output('blob');
+                        const reader = new FileReader();
+                        reader.onloadend = function() {
+                            const base64data = reader.result;
+                            localStorage.setItem('userName', name); // Store user's name
+                            localStorage.setItem('userEmail', email); // Store user's email
+                            localStorage.setItem('pdfBlob', base64data); // Store PDF blob
+                            // Redirect to the download page
+                            window.location.href = 'payment.html';
+                        };
+                        reader.readAsDataURL(blob);
+                    } else {
+                        alert('Failed to decode VIN. Please check your VIN number and try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('Error fetching report. Please try again later.');
+                });
+        });
+    </script>
+</body>
+
+</html>
